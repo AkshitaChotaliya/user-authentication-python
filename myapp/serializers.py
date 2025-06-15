@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from django.db.models import Q
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
 
 class SignupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -51,3 +53,35 @@ class LogoutSerializer(serializers.Serializer):
         except Token.DoesNotExist:
             raise serializers.ValidationError("Invalid token")
         return data
+    
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No user with this email.")
+        return value
+    
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uidb64 = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(min_length=6)
+
+    def validate(self, data):
+        try:
+            uid = urlsafe_base64_decode(data['uidb64']).decode()
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            raise serializers.ValidationError("Invalid UID")
+
+        if not default_token_generator.check_token(user, data['token']):
+            raise serializers.ValidationError("Invalid or expired token")
+
+        data['user'] = user
+        return data
+
+    def save(self):
+        password = self.validated_data['new_password']
+        user = self.validated_data['user']
+        user.set_password(password)
+        user.save()
+        return user

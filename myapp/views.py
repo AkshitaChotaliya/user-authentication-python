@@ -4,8 +4,11 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .serializers import SignupSerializer, LoginSerializer,LogoutSerializer
-
+from .serializers import SignupSerializer, LoginSerializer,LogoutSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+from django.contrib.auth.models import User
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -32,10 +35,36 @@ def login(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def logout(request):
-    serializer = LogoutSerializer(data=request.data)
+    token = request.auth
+    print("<--- token --->",token)
+    if token:
+        token.delete()
+        return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+    return Response({'error': 'Token not found or already deleted'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def password_reset_request(request):
+    serializer = PasswordResetRequestSerializer(data=request.data)
     if serializer.is_valid():
-        token_obj = serializer.validated_data['token_obj']
-        token_obj.delete()
-        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+        user = User.objects.get(email=serializer.validated_data['email'])
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        return Response({
+            'message': 'Password reset link generated',
+            'uid': uid,
+            'token': token
+        }, status=status.HTTP_200_OK)
     
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def password_reset_confirm(request):
+    serializer = PasswordResetConfirmSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'message': 'Password has been reset successfully'}, status=status.HTTP_200_OK)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
