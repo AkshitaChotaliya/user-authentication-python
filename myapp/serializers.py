@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from .models import WebhookEvent
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from django.db.models import Q
@@ -85,3 +86,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.set_password(password)
         user.save()
         return user
+
+class WebhookEventSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WebhookEvent
+        fields = ['event_type', 'reference_id', 'status', 'received_at']
+        read_only_fields = ['received_at']
+    
+    def create(self, validated_data):
+        return WebhookEvent.objects.create(**validated_data)

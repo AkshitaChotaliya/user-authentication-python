@@ -4,11 +4,19 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .serializers import SignupSerializer, LoginSerializer,LogoutSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+from .serializers import SignupSerializer, LoginSerializer,LogoutSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,WebhookEventSerializer
 from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
+from .models import Profile
+from django.db import transaction
+from django.http import JsonResponse
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -67,4 +75,24 @@ def password_reset_confirm(request):
         serializer.save()
         return Response({'message': 'Password has been reset successfully'}, status=status.HTTP_200_OK)
 
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
+def webhook_listener(request):
+    serializer = WebhookEventSerializer(data=request.data)
+    if serializer.is_valid():
+        webhook_event = serializer.save()
+        return Response({'message': 'Webhook event received', 'event_id': webhook_event.reference_id}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@transaction.atomic
+def register_user(request):
+    serializer = SignupSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        Profile.objects.create(user=user)
+        return Response({"message": "User and profile created", "user_id": user.id}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

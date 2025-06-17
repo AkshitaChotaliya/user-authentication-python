@@ -1,16 +1,23 @@
 
-# Django Authentication API
+🔐 Django Authentication API
+A basic and extendable user authentication system built with Django and Django REST Framework. This project demonstrates:
 
-This project provides a basic user authentication system using Django and Django REST Framework.
+* User registration (signup)
 
-## 🔧 Tech Stack
+* Admin panel customization
 
-- Django
-- Django REST Framework
-- SQLite (default Django DB)
-- Python 3.10+
+* Password handling
 
----
+* Database rollback on failure
+
+* RESTful API endpoints using Django REST Framework (DRF)
+
+🔧 Tech Stack
+Backend: Django, Django REST Framework
+
+Database: SQLite (default)
+
+Language: Python 3.10+
 
 ## 📁 Project Structure
 
