@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
 from .models import WebhookEvent,Profile
 
 class WebhookEventAdmin(admin.ModelAdmin):

@@ -13,6 +13,8 @@ from .models import Profile
 from django.db import transaction
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
+from .tasks import send_welcome_email
+
 
 
 User = get_user_model()
@@ -24,7 +26,9 @@ def signup(request):
     serializer = SignupSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        return Response({"message": "User created", "user_id": user.id}, status=status.HTTP_201_CREATED)
+        user_email = "akshitachotaliya3@gmail.com"
+        send_welcome_email.delay(user_email)
+        return Response({"message": "User created !! Email will be sent shortly.", "user_id": user.id}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

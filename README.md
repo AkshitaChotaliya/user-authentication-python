@@ -19,6 +19,26 @@ Database: SQLite (default)
 
 Language: Python 3.10+
 
+* Send a welcome email asynchronously after a user signs up.
+.
+
+✉️ Send Welcome Email Asynchronously with Celery
+📦 Setup Requirements
+* Django
+
+* Celery
+
+* Redis (as broker)
+
+* django-celery-results (for storing task results in DB – optional but recommended)
+
+Run the celery command:
+
+redis-server
+celery -A myproject worker --loglevel=info
+django_celery_results table using migrate command to migrate
+
+
 ## 📁 Project Structure
 
 ```
