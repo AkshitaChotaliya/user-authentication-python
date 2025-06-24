@@ -95,3 +95,14 @@ class WebhookEventSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         return WebhookEvent.objects.create(**validated_data)
+    
+
+class NumberInputSerializer(serializers.Serializer):
+    numbers = serializers.ListField(
+        child=serializers.IntegerField(), allow_empty=False
+    )
+
+class ResultSerializer(serializers.Serializer):
+    original = serializers.IntegerField()
+    result = serializers.IntegerField()
+

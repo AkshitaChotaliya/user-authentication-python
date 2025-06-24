@@ -34,9 +34,9 @@ Language: Python 3.10+
 
 Run the celery command:
 
-redis-server
-celery -A myproject worker --loglevel=info
-django_celery_results table using migrate command to migrate
+* redis-server
+* celery -A myproject worker --loglevel=info
+* django_celery_results table using migrate command to migrate
 
 
 ## 📁 Project Structure

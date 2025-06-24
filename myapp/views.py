@@ -4,7 +4,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .serializers import SignupSerializer, LoginSerializer,LogoutSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,WebhookEventSerializer
+from .serializers import SignupSerializer, LoginSerializer,LogoutSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,WebhookEventSerializer,NumberInputSerializer,ResultSerializer
 from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -14,7 +14,56 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
 from .tasks import send_welcome_email
+from multiprocessing import Process, Queue
+import threading
+from rest_framework.views import APIView
+from .models import Number
 
+
+# CPU-bound function for multiprocessing
+def square_cpu(number, q):
+    q.put({'original': number, 'result': number * number})
+
+# IO-bound simulation for multithreading
+def square_io(number, results):
+    results.append({'original': number, 'result': number * number})
+
+class SquareNumberAPI(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = NumberInputSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        numbers = serializer.validated_data['numbers']
+        mode = request.query_params.get('mode', 'thread')
+
+        result_data = []
+        if mode == 'process':
+            processes = []
+            q = Queue()
+            for num in numbers:
+                p = Process(target=square_cpu, args=(num, q))
+                processes.append(p)
+                p.start()
+
+            for p in processes:
+                p.join()
+
+            while not q.empty():
+                result_data.append(q.get())
+        else:
+            # MULTITHREADING
+            threads = []
+            results = []
+            for num in numbers:
+                t = threading.Thread(target=square_io, args=(num, results))
+                threads.append(t)
+                t.start()
+
+            for t in threads:
+                t.join()
+
+            result_data = results
+
+        return Response(ResultSerializer(result_data, many=True).data)
 
 
 User = get_user_model()

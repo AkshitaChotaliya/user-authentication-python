@@ -34,3 +34,8 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
+    
+
+class Number(models.Model):
+    value = models.IntegerField()
+    result = models.IntegerField()
