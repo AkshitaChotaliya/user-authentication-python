@@ -1,7 +1,6 @@
 from django.urls import path
 from .views import signup,login,logout,password_reset_request, password_reset_confirm,webhook_listener,register_user,SquareNumberAPI
 
-
 urlpatterns = [
     path('signup/', signup, name='signup'),
     path('login/', login, name='login'),

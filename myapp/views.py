@@ -18,7 +18,7 @@ from multiprocessing import Process, Queue
 import threading
 from rest_framework.views import APIView
 from .models import Number
-
+from django.shortcuts import render
 
 # CPU-bound function for multiprocessing
 def square_cpu(number, q):
@@ -80,6 +80,8 @@ def signup(request):
         return Response({"message": "User created !! Email will be sent shortly.", "user_id": user.id}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+def signup_view(request):
+    return render(request, 'signup.html')
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
