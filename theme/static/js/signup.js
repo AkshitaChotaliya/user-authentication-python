@@ -26,9 +26,18 @@ document.addEventListener("DOMContentLoaded", function () {
                     const result = await response.json();
                     console.log("<--- result --->", result);
 
+                if (response.ok) {
                     document.getElementById("responseMessage").textContent = result.message || "Signup successful.";
                     document.getElementById("responseMessage").classList.remove("text-red-500");
                     document.getElementById("responseMessage").classList.add("text-green-600");
+
+                    setTimeout(() => {
+                        window.location.href = "login-view/";
+                    }, 1000);
+                } else {
+                    document.getElementById("responseMessage").textContent = result.detail || "Signup failed.";
+                    document.getElementById("responseMessage").classList.add("text-red-500");
+                }
                     
                 } catch (error) {
                     document.getElementById("responseMessage").textContent = "Something went wrong.";

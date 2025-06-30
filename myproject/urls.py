@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-from myapp.views import signup_view 
+from myapp.views import signup_view,login_view
 
 
 urlpatterns = [
@@ -24,5 +24,6 @@ urlpatterns = [
     path("__reload__/", include("django_browser_reload.urls")),
     path('api/auth/', include('myapp.urls')),
     path('signup-view/', signup_view, name='signup_view'),
+    path('login-view/', login_view, name='login_view'),
     path('api/sales/', include('sales.urls'))
 ]

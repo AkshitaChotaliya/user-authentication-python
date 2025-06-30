@@ -12,6 +12,10 @@ A basic and extendable user authentication system built with Django and Django R
 
 * RESTful API endpoints using Django REST Framework (DRF)
 
+* Multiproccesing and multithreading
+
+* Tailwind css
+
 🔧 Tech Stack
 Backend: Django, Django REST Framework
 
