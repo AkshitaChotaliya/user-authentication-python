@@ -6,12 +6,15 @@ class APILoggingMiddleware:
 
     def __call__(self, request):
 
+        if request.path.startswith('/api/sales/'):
+            return self.get_response(request)
+
         open_paths = [
             '/signup/', '/login/', '/logout/', '/password-reset/',
             '/password-reset/confirm/', '/webhook/', '/register/'
         ]
 
-        if request.path.startswith('/api/auth') or request.path in open_paths:
+        if request.path.startswith('/api/auth') in open_paths:
             print(f"[API LOG] {request.method} {request.path}")
         else:
             if not request.user.is_authenticated:

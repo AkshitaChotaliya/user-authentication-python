@@ -3,9 +3,9 @@ from django.db import models
 # Create your models here.
 class Customer(models.Model):
     customer_id = models.CharField(max_length=100, unique=True)
-    name = models.CharField(max_length=255)
-    email = models.EmailField()
-    address = models.TextField()
+    customer_name = models.CharField(max_length=255)
+    customer_email = models.EmailField()
+    customer_address = models.TextField()
     demographics = models.JSONField(null=True, blank=True)
 
     def __str__(self):
@@ -13,7 +13,7 @@ class Customer(models.Model):
     
 class Product(models.Model):
     product_id = models.CharField(max_length=100, unique=True)
-    name = models.CharField(max_length=255)
+    product_name = models.CharField(max_length=255)
     category = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
 
