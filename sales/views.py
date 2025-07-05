@@ -6,6 +6,7 @@ from datetime import datetime
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.db import transaction
+from django.db.models import F, ExpressionWrapper, DecimalField, Sum
 
 
 
@@ -107,7 +108,6 @@ def refresh_data(request):
                 }
             )
 
-            # Product
             product, _ = Product.objects.get_or_create(
                 product_id=row['product_id'],
                 defaults={
@@ -117,7 +117,6 @@ def refresh_data(request):
                 }
             )
 
-            # Order
             order_data = {
                 'customer': customer,
                 'date_of_sale': row['date_of_sale'],
@@ -132,7 +131,6 @@ def refresh_data(request):
                 defaults=order_data
             )
 
-            # OrderItem
             OrderItem.objects.update_or_create(
                 order=order,
                 product=product,
@@ -154,6 +152,101 @@ def refresh_data(request):
         "total_rows": len(df)
     })
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def total_revenue(request):
+    start = request.GET.get('start_date')
+    end = request.GET.get('end_date')
+    items = OrderItem.objects.filter(
+        order__date_of_sale__range=[start, end]
+    ).annotate(
+        revenue=ExpressionWrapper(
+            F('quantity_sold') * F('unit_price') * (1 - F('order__discount')),
+            output_field=DecimalField()
+        )
+    )
+
+    total = items.aggregate(total_revenue=Sum('revenue'))['total_revenue'] or 0
+
+    return JsonResponse({'total_revenue': float(total)})
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def revenue_by_category(request):
+    start = request.GET.get('start_date')
+    end = request.GET.get('end_date')
+
+    if not start or not end:
+        return JsonResponse({"error": "Please provide start_date and end_date"}, status=400)
+    
+    items = OrderItem.objects.filter(
+        order__date_of_sale__range=[start, end]
+    ).annotate(
+        revenue=ExpressionWrapper(
+            F('quantity_sold') * F('unit_price') * (1 - F('order__discount')),
+            output_field=DecimalField()
+        )
+    ).values('product__category').annotate(
+        total_revenue=Sum('revenue')
+    ).order_by('-total_revenue')
+
+    return JsonResponse(list(items), safe=False)
+
+@api_view(['GET'])
+def revenue_by_product(request):
+    start = request.GET.get('start_date')
+    end = request.GET.get('end_date')
+
+    if not start or not end:
+        return JsonResponse({"error": "Please provide start_date and end_date"}, status=400)
+
+    items = OrderItem.objects.filter(
+        order__date_of_sale__range=[start, end]
+    ).annotate(
+        revenue=ExpressionWrapper(
+            F('quantity_sold') * F('unit_price') * (1 - F('order__discount')),
+            output_field=DecimalField()
+        )
+    ).values('product__product_name').annotate(total_revenue=Sum('revenue')).order_by('-total_revenue')
+
+    return JsonResponse(list(items), safe=False)
+
+@api_view(['GET'])
+def revenue_by_region(request):
+    start = request.GET.get('start_date')
+    end = request.GET.get('end_date')
+
+    if not start or not end:
+        return JsonResponse({"error": "Please provide start_date and end_date (YYYY-MM-DD)"}, status=400)
+
+    items = OrderItem.objects.filter(
+        order__date_of_sale__range=[start, end]
+    ).annotate(
+        revenue=ExpressionWrapper(
+            F('quantity_sold') * F('unit_price') * (1 - F('order__discount')),
+            output_field=DecimalField()
+        )
+    ).values('order__region').annotate(
+        total_revenue=Sum('revenue')
+    ).order_by('-total_revenue')
+
+    return JsonResponse(list(items))
+
+@api_view(['GET'])
+def top_products(request):
+    start = request.GET.get('start_date')
+    end = request.GET.get('end_date')
+    top_n = int(request.GET.get('limit', 5))
+
+    if not start or not end:
+        return JsonResponse({"error": "Please provide start_date and end_date (YYYY-MM-DD)"}, status=400)
+    
+    top_items = OrderItem.objects.filter(order__date_of_sale__range=[start,end]).values('product__product_name').annotate(total_quantuty=Sum('quantity_sold')).order_by('-total_quantuty')[:top_n]
+
+    return JsonResponse(list(top_items))
+
+
+@api_view(['GET'])
 def getCustomers(request):
     data = [{"name": "test"}]
     return JsonResponse(data, safe=False)
